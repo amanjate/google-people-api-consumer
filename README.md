@@ -8,6 +8,6 @@ To learn how to create credentials for a desktop application,
 refer to https://developers.google.com/workspace/guides/create-credentials.
 
 Then, download and copy the credentials.json file to src/main/resources/
-directory.
+directory. After that, update the project.
 
 Now, you can test the app. Let me know what you think about.

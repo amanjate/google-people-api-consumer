@@ -1,11 +1,14 @@
 package people;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
+
+import org.checkerframework.common.returnsreceiver.qual.This;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -30,28 +33,23 @@ public class PeopleApp {
 	public static People people;
 	
 	public static void listContacts() throws IOException {
-		
 		people.connections()
-			.list("people/me")
-			.setPageSize(10)
-			.setSortOrder("FIRST_NAME_ASCENDING")
-			.setPersonFields("names,phoneNumbers,emailAddresses")
-			.execute()
-			.getConnections()
-			.forEach(PeopleApp::printPerson);
+			  .list("people/me")
+			  .setPageSize(10)
+			  .setSortOrder("FIRST_NAME_ASCENDING")
+			  .setPersonFields("names,phoneNumbers,emailAddresses")
+			  .execute()
+			  .getConnections()
+			  .forEach(PeopleApp::printPerson);
 	}
 	
 	public static Person getContact(String resourceName) throws IOException {
-		return people.getBatchGet()
-				.setResourceNames(Arrays.asList(resourceName))
-				.setPersonFields("names,phoneNumbers,emailAddresses")
-				.execute()
-				.getResponses()
-				.get(0)
-				.getPerson();
+		return people.get(resourceName)
+					 .setPersonFields("names,phoneNumbers,emailAddresses")
+					 .execute();
 	}
 	
-	public static void createContact() throws IOException {
+	public static Person createContact() throws IOException {
 		
 		Person person = new Person();
 		
@@ -70,9 +68,7 @@ public class PeopleApp {
 		emailAddress.setValue("user@domain.com");
 		person.setEmailAddresses(Arrays.asList(emailAddress));
 		
-		people.createContact(person).execute();
-		
-		System.out.println("Done");
+		return people.createContact(person).execute();
 	}
 
 	public static void updateContact() throws IOException {
@@ -91,8 +87,8 @@ public class PeopleApp {
 		person.setPhoneNumbers(Arrays.asList(phoneNumber1, phoneNumber2));
 
 		people.updateContact(resourceName, person)
-			.setUpdatePersonFields("phoneNumbers")
-			.execute();
+			  .setUpdatePersonFields("phoneNumbers")
+			  .execute();
 
 		System.out.println("Done!");
 	}
@@ -129,17 +125,17 @@ public class PeopleApp {
 		// Build a new authorized API client service.
 		NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 		JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-		InputStream in = PeopleApp.class.getResourceAsStream("/credentials.json");
+		InputStream in = This.class.getResourceAsStream("/credentials.json");
 		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(jsonFactory, new InputStreamReader(in));
 		List<String> scopes = Arrays.asList(PeopleServiceScopes.CONTACTS);
-
+		
 		// Build flow and trigger user authorization request.
 		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, jsonFactory,
 				clientSecrets, scopes)
-				.setDataStoreFactory(new FileDataStoreFactory(new java.io.File("tokens")))
+				.setDataStoreFactory(new FileDataStoreFactory(new File("tokens")))
 				.setAccessType("offline")
 				.build();
-
+		
 		LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
 		Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
 
@@ -152,16 +148,17 @@ public class PeopleApp {
 			listContacts();
 		
 		//	Get and then print contact
-		//	printPerson(getContact("people/c636828714667820353"));
+		//	printPerson(getContact("people/c6431918578418550454"));
 		
 		//	Create contact
-		//	createContact();
+		//	printPerson(createContact());
 		
 		//	Update contact
 		//	updateContact();
 		
 		//	Delete contact
 		//	deleteContact("people/c4035337678563471853");
+		
 	}
 
 }
